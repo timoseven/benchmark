@@ -13,8 +13,14 @@ fi
 limit=${limit:-1bps}
 choice=${choice:IP}
 
+if [ $# -le 4 ];then
+  echo "please input argument"
+  exit 1
+fi
+
 #get option
-while getopts "i:p:l:" arg #选项后面的冒号表示该选项需要参数
+while getopts "i:p:l:c:" arg
+#选项后面的冒号表示该选项需要参数
 do
         case $arg in
              i)
@@ -52,8 +58,20 @@ if [ $choice == "TC" ];then
 
 ##创建队列规则添加到eth0上,root表示根规则,设置句柄为1：,htb default 1表示没有进行分类的数据包都走1:1缺省类
   $tc qdisc add dev $device root handle 1: htb default 1
-# 
 ##在父类1:的基础上,创建一个子类1:1,使用令牌桶(htb)队列,保证子类的带宽为1000Mbit(根据实际带宽设置)
   $tc class add dev $device parent 1: classid 1:1 htb rate $limit
-
 fi
+
+if [ $choice == "IP" ];then
+  $iptables -F
+  $ipatlbes -I INPUT -i $device -p tcp –dport $port  -j DROP
+fi
+
+if [[ $choice == "DTC" ]];then
+  $tc qdisc del dev $device root 2>/dev/null
+fi
+
+if [ $choice == "DIP" ];then
+  $iptables -F
+fi
+
